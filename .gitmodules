@@ -1,0 +1,4 @@
+[submodule "examples/hello-world-libdragon/libdragon"]
+	path = examples/hello-world-libdragon/libdragon
+	url = https://github.com/DragonMinded/libdragon
+	branch = trunk

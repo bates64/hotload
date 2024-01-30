@@ -1,0 +1,15 @@
+.DS_Store
+.Trashes
+._*
+
+build
+*.a
+*.v64
+*.z64
+*.elf
+*.bin
+*.o
+*.dfs
+*.ipch
+
+node_modules
