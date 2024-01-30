@@ -13,3 +13,5 @@ build
 *.ipch
 
 node_modules
+
+/target
