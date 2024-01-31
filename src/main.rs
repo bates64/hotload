@@ -1,3 +1,4 @@
+mod diff;
 mod program;
 
 use clap::Parser;
@@ -53,6 +54,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let elf = goblin::elf::Elf::parse(&elf_file)?;
         let new_program = program::Program::from(&elf);
         println!("New program! Loaded {} items", new_program.items.len());
+
+        dbg!(diff::diff(&program, &new_program));
     }
 
     Ok(())

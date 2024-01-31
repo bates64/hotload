@@ -7,7 +7,7 @@ pub struct Program<'a> {
     pub items: HashMap<&'a str, Item<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Item<'a> {
     section_name: Option<&'a str>,
     ram_addr: u64,
@@ -39,6 +39,8 @@ impl<'a> From<&Elf<'a>> for Program<'a> {
             let sym_offset = sym.st_value - section.sh_addr;
 
             // TODO: consider tracking st_type (sym::STT_* consts)
+
+            // TODO: read the content of the item
 
             let item = Item {
                 section_name,
