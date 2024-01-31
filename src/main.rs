@@ -3,6 +3,7 @@ mod program;
 
 use clap::Parser;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
+use paris::error;
 use std::{path::PathBuf, time::Duration};
 
 /// Hot code loading (dynamic software updating) for Nintendo 64 development
@@ -20,10 +21,23 @@ struct Args {
     /// Source files and/or directories to recursively watch for changes
     #[clap(short, long)]
     src: Vec<PathBuf>,
+
+    // TODO: support attaching to existing emulator
+    /// Emulator command (e.g. `ares rom.z64`)
+    #[clap(short = 'x', long)]
+    emulator: String,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+
+    run_build_command(&args.build)?;
+
+    // Spawn emulator
+    let _ = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(&args.emulator)
+        .spawn()?;
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
@@ -43,11 +57,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         result?; // Propagate errors
 
         // Rebuild the project
-        std::process::Command::new("sh")
-            .arg("-c")
-            .arg(&args.build)
-            .status()
-            .expect("Failed to execute build system");
+        if let Err(error) = run_build_command(&args.build) {
+            error!("{}", error);
+            continue;
+        }
 
         // Reload the program
         let elf_file = std::fs::read(&args.elf)?;
@@ -58,5 +71,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(diff::diff(&program, &new_program));
     }
 
+    Ok(())
+}
+
+fn run_build_command(command: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let status = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .status()?;
+    if !status.success() {
+        return Err("Build failed".into());
+    }
     Ok(())
 }

@@ -9,5 +9,5 @@ Download the toolchain with `npm install` and make sure you have hotload64 insta
 ## Watch
 
 ```
-hotload64 --build "npm build" --elf build/hello.elf --src src
+hotload64 --build "npm build" --elf build/hello.elf --src src --emulator "ares hello.z64"
 ```
