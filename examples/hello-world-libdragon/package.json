@@ -1,10 +1,7 @@
 {
 	"scripts": {
-		"stop": "libdragon stop",
-    "start": "libdragon start",
-		"prepare": "libdragon init",
-    "build": "libdragon make",
-    "clean": "libdragon make clean"
+		"_comment": "https://github.com/anacierdem/libdragon-docker/issues/69",
+    "build": "libdragon make && rm -rf .git"
 	},
 	"dependencies": {
 		"libdragon": "^11.0.0"
