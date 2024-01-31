@@ -1,4 +1,6 @@
 mod diff;
+mod gdb;
+mod patch;
 mod program;
 
 use clap::Parser;
@@ -39,6 +41,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(&args.emulator)
         .spawn()?;
 
+    // Wait for port to open
+    // TODO: make this better
+    for _ in 0..10 {
+        if std::net::TcpStream::connect("[::1]:9123").is_ok() {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+
+    // Connect to GDB server
+    let mut gdb = gdb::Gdb::new("[::1]:9123")?;
+
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
     let elf = goblin::elf::Elf::parse(&elf_file)?;
@@ -68,7 +82,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let new_program = program::Program::from(&elf);
         println!("New program! Loaded {} items", new_program.items.len());
 
-        dbg!(diff::diff(&program, &new_program));
+        let diff = diff::diff(&program, &new_program);
+        patch::apply(&mut gdb, &diff)?;
     }
 
     Ok(())

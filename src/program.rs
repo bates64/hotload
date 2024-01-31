@@ -9,10 +9,10 @@ pub struct Program<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Item<'a> {
-    section_name: Option<&'a str>,
-    ram_addr: u64,
-    rom_addr: u64,
-    size: u64,
+    pub section_name: Option<&'a str>,
+    pub ram_addr: u64,
+    pub rom_addr: u64,
+    pub size: u64,
 }
 
 impl<'a> From<&Elf<'a>> for Program<'a> {
