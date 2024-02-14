@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_build_command(&args.build)?;
 
     // Spawn emulator
-    let _ = std::process::Command::new("sh")
+    let mut emulator = std::process::Command::new("sh")
         .arg("-c")
         .arg(&args.emulator)
         .spawn()?;
@@ -55,11 +55,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
-    let elf = goblin::elf::Elf::parse(&elf_file)?;
-    let program = program::Program::from(&elf);
+    let program = program::Program::new(&elf_file)?;
     println!("Loaded {} items", program.items.len());
+    program.items["main"].print_hex();
 
     // Watch for source changes
+    println!("Watching {:?} for changes", args.src);
     let (tx, rx) = std::sync::mpsc::channel();
     let mut debouncer = new_debouncer(Duration::from_millis(10), tx)?;
     let watcher = debouncer.watcher();
@@ -78,13 +79,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Reload the program
         let elf_file = std::fs::read(&args.elf)?;
-        let elf = goblin::elf::Elf::parse(&elf_file)?;
-        let new_program = program::Program::from(&elf);
+        let new_program = program::Program::new(&elf_file)?;
         println!("New program! Loaded {} items", new_program.items.len());
+        program.items["main"].print_hex();
 
         let diff = diff::diff(&program, &new_program);
-        patch::apply(&mut gdb, &diff)?;
+        if let Err(error) = patch::apply(&mut gdb, &diff) {
+            error!("{}", error);
+            continue;
+        }
+
+        // TODO: solve lifetimes
+        //program = new_program;
     }
+
+    emulator.kill()?; // TODO: do this on ^C as well
 
     Ok(())
 }

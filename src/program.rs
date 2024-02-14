@@ -12,11 +12,13 @@ pub struct Item<'a> {
     pub section_name: Option<&'a str>,
     pub ram_addr: u64,
     pub rom_addr: u64,
-    pub size: u64,
+    pub content: &'a [u8],
 }
 
-impl<'a> From<&Elf<'a>> for Program<'a> {
-    fn from(elf: &Elf<'a>) -> Self {
+impl<'a> Program<'a> {
+    pub fn new(bytes: &'a [u8]) -> Result<Self, goblin::error::Error> {
+        let elf = Elf::parse(bytes)?;
+
         let mut items = HashMap::new();
 
         for sym in &elf.syms {
@@ -37,16 +39,15 @@ impl<'a> From<&Elf<'a>> for Program<'a> {
             let section_name = elf.shdr_strtab.get_at(section.sh_name);
 
             let sym_offset = sym.st_value - section.sh_addr;
+            let rom_addr = section.sh_offset + sym_offset;
 
             // TODO: consider tracking st_type (sym::STT_* consts)
-
-            // TODO: read the content of the item
 
             let item = Item {
                 section_name,
                 ram_addr: sym.st_value,
-                rom_addr: section.sh_offset + sym_offset,
-                size: sym.st_size,
+                rom_addr,
+                content: &bytes[rom_addr as usize..(rom_addr + sym.st_size) as usize],
             };
 
             if let Some(name) = name {
@@ -56,6 +57,22 @@ impl<'a> From<&Elf<'a>> for Program<'a> {
             }
         }
 
-        Self { items }
+        Ok(Self { items })
+    }
+}
+
+impl<'a> Item<'a> {
+    pub fn size(&self) -> usize {
+        self.content.len()
+    }
+
+    pub fn print_hex(&self) {
+        for (i, byte) in self.content.iter().enumerate() {
+            if i % 16 == 0 {
+                print!("\n{:08x}  ", self.rom_addr + i as u64);
+            }
+            print!("{:02x} ", byte);
+        }
+        println!();
     }
 }
