@@ -104,8 +104,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Check for exit
         if event::poll(std::time::Duration::from_millis(16))? {
             if let event::Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                    break;
+                match (key.kind, key.code) {
+                    (KeyEventKind::Press, KeyCode::Char('q')) => break,
+                    (KeyEventKind::Press, KeyCode::Esc) => break,
+                    (KeyEventKind::Press, KeyCode::Char('c'))
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                    {
+                        break
+                    }
+                    _ => {}
                 }
             }
         }
@@ -148,7 +155,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // TODO: do this on ^C as well
     emulator.kill()?;
     stdout().execute(LeaveAlternateScreen)?;
     disable_raw_mode()?;
