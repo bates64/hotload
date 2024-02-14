@@ -1,4 +1,5 @@
 mod diff;
+mod emulator;
 mod gdb;
 mod patch;
 mod program;
@@ -46,14 +47,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let args = Args::parse();
 
-    // Build the project
     run_build_command(&args.build)?;
 
-    // Spawn emulator
-    let mut emulator = std::process::Command::new("sh")
-        .arg("-c")
-        .arg(&args.emulator)
-        .spawn()?;
+    emulator::spawn(&args.emulator);
 
     // Wait for port to open
     // TODO: make this better
@@ -155,7 +151,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    emulator.kill()?;
+    emulator::try_kill();
     stdout().execute(LeaveAlternateScreen)?;
     disable_raw_mode()?;
 
@@ -173,12 +169,12 @@ fn run_build_command(command: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Set up a panic handler that restores the terminal state before exiting.
+/// Set up a panic handler that restores the terminal state and kills the emulator before exiting.
 // https://ratatui.rs/how-to/develop-apps/panic-hooks/
-// TODO: also close emulator
 fn setup_panic_handler() {
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
+        emulator::try_kill();
         crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen).unwrap();
         crossterm::terminal::disable_raw_mode().unwrap();
         original_hook(panic_info);
