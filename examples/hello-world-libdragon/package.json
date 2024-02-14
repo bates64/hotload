@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"_comment": "https://github.com/anacierdem/libdragon-docker/issues/69",
+		"prepare": "libdragon init",
     "build": "libdragon make && rm -rf .git"
 	},
 	"dependencies": {
