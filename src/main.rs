@@ -11,7 +11,7 @@ use crossterm::{
     ExecutableCommand,
 };
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
-use paris::error;
+use paris::error; // TODO: stop using paris, use a ratatui widget
 use ratatui::{
     prelude::{CrosstermBackend, Stylize, Terminal},
     widgets::Paragraph,
@@ -52,8 +52,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     emulator::spawn(&args.emulator);
 
     // Wait for port to open
-    // TODO: make this better
-    for _ in 0..10 {
+    println!("Waiting for GDB server...");
+    loop {
         if std::net::TcpStream::connect("[::1]:9123").is_ok() {
             break;
         }
