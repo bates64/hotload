@@ -1,3 +1,4 @@
+use capstone::{arch::mips::*, prelude::*, Capstone, Endian};
 use goblin::elf::{section_header, Elf};
 use paris::warn;
 use std::collections::HashMap;
@@ -74,5 +75,29 @@ impl<'a> Item<'a> {
             print!("{:02x} ", byte);
         }
         println!();
+    }
+
+    pub fn disassemble(&self) -> Result<String, capstone::Error> {
+        // TODO: lazy static or put in Program
+        let cs = Capstone::new()
+            .mips()
+            .mode(ArchMode::Mips64) // TODO: libdragon is maybe mips64?
+            .endian(Endian::Big)
+            .detail(true) // TODO: find out what this does
+            .build()?;
+
+        let insns = cs.disasm_all(self.content, self.ram_addr)?;
+
+        let mut output = String::new();
+        for i in insns.iter() {
+            output.push_str(&format!(
+                "{:08x}:\t{}\t{}\n",
+                i.address(),
+                i.mnemonic().unwrap(),
+                i.op_str().unwrap()
+            ));
+        }
+
+        Ok(output)
     }
 }

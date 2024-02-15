@@ -86,6 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
+    let mut diff;
+
     loop {
         terminal.draw(|frame| {
             let area = frame.size();
@@ -128,9 +130,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let elf_file = std::fs::read(&args.elf)?;
                 let new_program = program::Program::new(&elf_file)?;
                 println!("New program! Loaded {} items", new_program.items.len());
-                program.items["main"].print_hex();
+                println!("{}", program.items["main"].disassemble().unwrap());
 
-                let diff = diff::diff(&program, &new_program);
+                diff = diff::diff(&program, &new_program);
                 if let Err(error) = patch::apply(&mut gdb, &diff) {
                     error!("{}", error);
                     continue;

@@ -25,6 +25,7 @@ pub fn apply(gdb: &mut Gdb, diff: &[Diff<'_, '_>]) -> Result<(), Error> {
                     return Err(Error::NotSupported);
                 }
 
+                /*
                 // TODO
                 // print hex of old item
                 for (i, byte) in old_item.content.iter().enumerate() {
@@ -34,6 +35,9 @@ pub fn apply(gdb: &mut Gdb, diff: &[Diff<'_, '_>]) -> Result<(), Error> {
                     print!("{:02x} ", byte);
                 }
                 println!();
+                */
+
+                println!("{}", new_item.disassemble().unwrap());
             }
         }
     }
