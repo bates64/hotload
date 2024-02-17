@@ -1,4 +1,5 @@
 use crate::program::{Item, Program};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum Diff<'old, 'new> {
@@ -38,4 +39,16 @@ pub fn diff<'old: 'new, 'new>(
     }
 
     diffs
+}
+
+impl Display for Diff<'_, '_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Diff::Add(item) => write!(f, "Add {}", item),
+            Diff::Remove(item) => write!(f, "Remove {}", item),
+            Diff::Change(old_item, new_item) => {
+                write!(f, "Change {} -> {}", old_item, new_item)
+            }
+        }
+    }
 }

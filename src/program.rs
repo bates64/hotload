@@ -2,6 +2,7 @@ use capstone::{arch::mips::*, prelude::*, Capstone, Endian};
 use goblin::elf::{section_header, Elf};
 use paris::warn;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct Program<'a> {
@@ -99,5 +100,18 @@ impl<'a> Item<'a> {
         }
 
         Ok(output)
+    }
+}
+
+impl Display for Item<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Item {{ section: {:?}, ram_addr: 0x{:08x}, rom_addr: 0x{:08x}, size: {} }}",
+            self.section_name.unwrap_or("None"),
+            self.ram_addr,
+            self.rom_addr,
+            self.size()
+        )
     }
 }

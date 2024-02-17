@@ -89,6 +89,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", program.items["main"].disassemble().unwrap());
 
         diff = diff::diff(&program, &new_program);
+
+        for diff in &diff {
+            println!("{}", diff);
+        }
+
         if let Err(error) = patch::apply(&mut gdb, &diff) {
             error!("{}", error);
             continue;
