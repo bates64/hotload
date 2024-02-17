@@ -1,6 +1,6 @@
 use std::process::Child;
 
-/// An emulator process. Killed when dropped.
+/// An emulator process.
 #[derive(Debug)]
 pub struct Emulator {
     child: Child,
@@ -18,11 +18,5 @@ impl Emulator {
 
     pub fn try_kill(&mut self) {
         let _ = self.child.kill();
-    }
-}
-
-impl Drop for Emulator {
-    fn drop(&mut self) {
-        self.try_kill();
     }
 }

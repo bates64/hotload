@@ -47,6 +47,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(0);
     })?;
 
+    match hotload(&args) {
+        Ok(()) => {}
+        Err(error) => {
+            error!("{}", error);
+        }
+    }
+
+    // Kill emulator on exit
+    if let Ok(mut emulator) = emulator.write() {
+        emulator.try_kill();
+    }
+    Ok(())
+}
+
+fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     // Wait for port to open
     println!("Waiting for GDB server...");
     loop {
@@ -58,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Connect to GDB server
     let mut gdb = gdb::Client::new("[::1]:9123")?;
-    //gdb.handle_recieve()?;
+    gdb.handle_recieve()?;
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
@@ -71,8 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (tx, rx) = channel();
     let mut debouncer = new_debouncer(Duration::from_millis(10), tx)?;
     let watcher = debouncer.watcher();
-    for path in args.src {
-        watcher.watch(&path, RecursiveMode::Recursive)?;
+    for path in &args.src {
+        watcher.watch(path, RecursiveMode::Recursive)?;
     }
 
     // Everything is ready.
