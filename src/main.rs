@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Connect to GDB server
-    let mut gdb = gdb::Gdb::new("[::1]:9123")?;
+    let mut gdb = gdb::Client::new("[::1]:9123")?;
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;

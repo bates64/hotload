@@ -1,5 +1,5 @@
 use crate::diff::Diff;
-use crate::gdb::Gdb;
+use crate::gdb::Client;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -9,7 +9,7 @@ pub enum Error {
 }
 
 /// Apply a diff to a process.
-pub fn apply(gdb: &mut Gdb, diff: &[Diff<'_, '_>]) -> Result<(), Error> {
+pub fn apply(gdb: &mut Client, diff: &[Diff<'_, '_>]) -> Result<(), Error> {
     for change in diff {
         match change {
             Diff::Add(_) => return Err(Error::NotSupported),

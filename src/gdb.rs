@@ -5,13 +5,13 @@ use std::net::TcpStream;
 /// A connection to a GDB server over the GDB Remote Serial Protocol. This is the client.
 ///
 /// See https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html
-pub struct Gdb {
+pub struct Client {
     stream: TcpStream,
 }
 
 // For an example of a GDB server, see https://github.com/ares-emulator/ares/tree/master/nall/gdb
 
-impl Gdb {
+impl Client {
     pub fn new(address: &str) -> Result<Self> {
         let stream = TcpStream::connect(address)?;
         Ok(Self { stream })
