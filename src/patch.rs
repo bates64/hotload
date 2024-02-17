@@ -1,5 +1,5 @@
 use crate::diff::Diff;
-use crate::gdb::Client;
+use crate::gdb::{self, Client};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -7,8 +7,8 @@ pub enum Error {
     #[error("not supported, restart the emulator")]
     NotSupported,
 
-    #[error("GDB IO error: {0}")]
-    Io(#[from] std::io::Error),
+    #[error("GDB error: {0}")]
+    Gdb(#[from] gdb::Error),
 }
 
 /// Apply a diff to a process.

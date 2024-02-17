@@ -1,6 +1,9 @@
-use std::io::prelude::*;
-use std::io::{Read, Result, Write};
+use paris::error;
+use std::io::{Read, Write};
 use std::net::TcpStream;
+use thiserror::Error;
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 /// A connection to a GDB server over the GDB Remote Serial Protocol. This is the client.
 ///
@@ -11,10 +14,56 @@ pub struct Client {
 
 // For an example of a GDB server, see https://github.com/ares-emulator/ares/tree/master/nall/gdb
 
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Utf8(#[from] std::str::Utf8Error),
+}
+
 impl Client {
     pub fn new(address: &str) -> Result<Self> {
-        let stream = TcpStream::connect(address)?;
+        let mut stream = TcpStream::connect(address)?;
+
         Ok(Self { stream })
+    }
+
+    pub fn handle_recieve(&mut self) -> Result<()> {
+        let mut buffer = [0; 4096];
+        let mut packet = Vec::new();
+
+        loop {
+            let bytes_read = self.stream.read(&mut buffer)?;
+            if bytes_read == 0 {
+                break;
+            }
+
+            packet.extend_from_slice(&buffer[..bytes_read]);
+
+            if packet.ends_with(b"$") {
+                break;
+            }
+        }
+
+        let packet = packet;
+
+        if packet.len() < 4 {
+            return Ok(());
+        }
+
+        // Won't bother checking the checksum.
+
+        let packet = std::str::from_utf8(&packet)?;
+
+        println!("(gdb) received packet: {}", packet);
+
+        if packet.starts_with("qSupported") {
+            self.write_packet(b"QStartNoAckMode")?;
+        }
+
+        Ok(())
     }
 
     // https://sourceware.org/gdb/current/onlinedocs/gdb.html/Packets.html
