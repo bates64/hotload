@@ -25,7 +25,7 @@ pub enum Error {
 
 impl Client {
     pub fn new(address: &str) -> Result<Self> {
-        let mut stream = TcpStream::connect(address)?;
+        let stream = TcpStream::connect(address)?;
 
         Ok(Self { stream })
     }
