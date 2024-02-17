@@ -69,7 +69,6 @@ fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     let elf_file = std::fs::read(&args.elf)?;
     let program = program::Program::new(&elf_file)?;
     println!("Loaded {} items", program.items.len());
-    program.items["main"].print_hex();
 
     // Watch for source changes
     println!("Watching {:?} for changes", args.src);
@@ -89,9 +88,6 @@ fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     for result in rx {
         result?;
 
-        // TODO
-        gdb.handle_recieve()?;
-
         // Rebuild the project
         if let Err(error) = run_build_command(&args.build) {
             error!("{}", error);
@@ -102,7 +98,7 @@ fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
         let elf_file = std::fs::read(&args.elf)?;
         let new_program = program::Program::new(&elf_file)?;
         println!("New program! Loaded {} items", new_program.items.len());
-        println!("{}", program.items["main"].disassemble().unwrap());
+        //println!("{}", program.items["main"].disassemble().unwrap());
 
         diff = diff::diff(&program, &new_program);
 

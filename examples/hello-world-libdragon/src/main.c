@@ -2,11 +2,11 @@
 
 #include <libdragon.h>
 
-int i = 0;
+// try changing this
+int value = 0x1234;
 
 void update(void) {
-    printf("i = %d\n", i);
-    i += 1; // try changing this
+    printf("value = %X\n", value);
 }
 
 int main(void) {

@@ -21,12 +21,16 @@ pub enum Error {
 
     #[error(transparent)]
     Utf8(#[from] std::str::Utf8Error),
+
+    #[error("bad packet {0:?}")]
+    BadPacket(String),
 }
 
 impl Client {
     /// Connects to a GDB server at the given address.
     pub fn new(address: &str) -> Result<Self> {
         let stream = TcpStream::connect(address)?;
+        //stream.set_nonblocking(true)?;
         let mut client = Self { stream };
 
         // Acknowledge the connection
@@ -63,46 +67,56 @@ impl Client {
     }
 
     /// Handles a single packet from the GDB server.
-    pub fn handle_recieve(&mut self) -> Result<()> {
+    /// This function does not block. It will return Err if there is no packet to read.
+    pub fn accept_packet(&mut self) -> Result<String> {
         let mut buffer = [0; 4096];
         let mut packet = Vec::new();
 
         loop {
             let bytes_read = self.stream.read(&mut buffer)?;
-            dbg!(bytes_read);
             if bytes_read == 0 {
                 break;
             }
 
             packet.extend_from_slice(&buffer[..bytes_read]);
 
-            if packet.ends_with(b"$") {
+            if packet[packet.len() - 3] == b'#' {
                 break;
             }
         }
 
-        println!("(gdb) received packet: {:?}", packet);
+        //let mut packet = std::str::from_utf8(&packet)?.to_string();
 
-        let packet = packet;
-
-        // Won't bother checking the checksum.
-
-        let packet = std::str::from_utf8(&packet)?;
-
-        println!("(gdb) received packet: {}", packet);
-
-        self.ack_recv()?;
-
-        if packet.starts_with("qSupported") {
-            self.write_packet(b"QStartNoAckMode")?;
+        // Ignore ack
+        if packet[0] == b'+' {
+            packet.remove(0);
         }
 
-        Ok(())
+        // Packets are in the form $...#..
+        if packet[0] == b'$' {
+            // Won't bother checking the checksum.
+
+            // Remove the checksum
+            let hash = packet.len() - 3; // #xx
+            let packet = &packet[1..hash]; // 1 to skip the $
+
+            let packet = std::str::from_utf8(packet)?.to_string();
+
+            #[cfg(debug_assertions)]
+            println!("(gdb) <- {}", &packet);
+
+            self.ack_recv()?;
+
+            Ok(packet.to_string())
+        } else {
+            let packet = std::str::from_utf8(&packet)?.to_string();
+            Err(Error::BadPacket(packet))
+        }
     }
 
     /// Writes a packet to the GDB server.
     // https://sourceware.org/gdb/current/onlinedocs/gdb.html/Packets.html
-    pub fn write_packet(&mut self, packet: &[u8]) -> Result<()> {
+    fn send(&mut self, packet: &[u8]) -> Result<()> {
         let checksum = packet
             .iter()
             .fold(0, |acc: u8, &byte| acc.wrapping_add(byte));
@@ -114,15 +128,30 @@ impl Client {
             .write_all(format!("{:02}", checksum).as_bytes())?;
         self.stream.flush()?;
 
+        #[cfg(debug_assertions)]
+        println!("(gdb) -> {}", std::str::from_utf8(packet)?);
+
         Ok(())
     }
 
+    fn send_str(&mut self, packet: &str) -> Result<()> {
+        self.send(packet.as_bytes())
+    }
+
+    // M addr,length:XX…
     pub fn write_memory(&mut self, address: u64, data: &[u8]) -> Result<()> {
-        let mut packet = Vec::new();
-        packet.extend_from_slice(b"M");
-        packet.extend_from_slice(&address.to_be_bytes());
-        packet.extend_from_slice(&data.len().to_be_bytes());
-        packet.extend_from_slice(data);
-        self.write_packet(&packet)
+        let mut data_hex = String::with_capacity(data.len() * 2);
+        for byte in data {
+            data_hex.push_str(&format!("{:02X}", byte));
+        }
+
+        self.send_str(&format!("M{:X},{}:{}", address, data.len(), data_hex))?;
+
+        let response = self.accept_packet()?;
+        if response == "OK" {
+            Ok(())
+        } else {
+            Err(Error::BadPacket(response))
+        }
     }
 }
