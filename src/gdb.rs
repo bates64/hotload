@@ -24,18 +24,52 @@ pub enum Error {
 }
 
 impl Client {
+    /// Connects to a GDB server at the given address.
     pub fn new(address: &str) -> Result<Self> {
         let stream = TcpStream::connect(address)?;
+        let mut client = Self { stream };
 
-        Ok(Self { stream })
+        // Acknowledge the connection
+        // https://github.com/ares-emulator/ares/blob/dd9c728a1277f586a663e415234f7b6b1c6dea55/nall/tcptext/tcptext-server.cpp#L18
+        client.ack_recv()?;
+
+        Ok(client)
     }
 
+    /// Blocks until a connection is established.
+    pub fn new_blocking(address: &str) -> Result<Self> {
+        loop {
+            match Self::new(address) {
+                Ok(client) => return Ok(client),
+                Err(error) => {
+                    if let Error::Io(error) = &error {
+                        if error.kind() == std::io::ErrorKind::ConnectionRefused {
+                            std::thread::sleep(std::time::Duration::from_millis(100));
+                            continue;
+                        }
+                    }
+
+                    // Some other error
+                    return Err(error);
+                }
+            }
+        }
+    }
+
+    fn ack_recv(&mut self) -> Result<()> {
+        self.stream.write_all(b"+")?;
+        self.stream.flush()?;
+        Ok(())
+    }
+
+    /// Handles a single packet from the GDB server.
     pub fn handle_recieve(&mut self) -> Result<()> {
         let mut buffer = [0; 4096];
         let mut packet = Vec::new();
 
         loop {
             let bytes_read = self.stream.read(&mut buffer)?;
+            dbg!(bytes_read);
             if bytes_read == 0 {
                 break;
             }
@@ -51,15 +85,13 @@ impl Client {
 
         let packet = packet;
 
-        if packet.len() < 4 {
-            return Ok(());
-        }
-
         // Won't bother checking the checksum.
 
         let packet = std::str::from_utf8(&packet)?;
 
         println!("(gdb) received packet: {}", packet);
+
+        self.ack_recv()?;
 
         if packet.starts_with("qSupported") {
             self.write_packet(b"QStartNoAckMode")?;
@@ -68,6 +100,7 @@ impl Client {
         Ok(())
     }
 
+    /// Writes a packet to the GDB server.
     // https://sourceware.org/gdb/current/onlinedocs/gdb.html/Packets.html
     pub fn write_packet(&mut self, packet: &[u8]) -> Result<()> {
         let checksum = packet
@@ -79,6 +112,7 @@ impl Client {
         self.stream.write_all(b"#")?;
         self.stream
             .write_all(format!("{:02}", checksum).as_bytes())?;
+        self.stream.flush()?;
 
         Ok(())
     }

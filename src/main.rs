@@ -62,18 +62,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
-    // Wait for port to open
     println!("Waiting for GDB server...");
-    loop {
-        if std::net::TcpStream::connect("[::1]:9123").is_ok() {
-            break;
-        }
-        std::thread::sleep(Duration::from_millis(100));
-    }
-
-    // Connect to GDB server
-    let mut gdb = gdb::Client::new("[::1]:9123")?;
-    gdb.handle_recieve()?;
+    let mut gdb = gdb::Client::new_blocking("[::1]:9123")?;
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
@@ -91,12 +81,16 @@ fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Everything is ready.
+    println!("Ready for hotloading!");
 
     let mut diff;
 
     // On filesystem change, rebuild the project
     for result in rx {
         result?;
+
+        // TODO
+        gdb.handle_recieve()?;
 
         // Rebuild the project
         if let Err(error) = run_build_command(&args.build) {
