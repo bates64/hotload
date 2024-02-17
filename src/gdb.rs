@@ -47,6 +47,8 @@ impl Client {
             }
         }
 
+        println!("(gdb) received packet: {:?}", packet);
+
         let packet = packet;
 
         if packet.len() < 4 {

@@ -7,8 +7,8 @@ mod program;
 use clap::Parser;
 use emulator::Emulator;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
-use paris::error; // TODO: stop using paris, use a ratatui widget
-use std::sync::mpsc::channel;
+use paris::error;
+use std::sync::{mpsc::channel, Arc, RwLock};
 use std::{path::PathBuf, time::Duration};
 
 /// Hot code loading (dynamic software updating) for Nintendo 64 development
@@ -38,7 +38,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     run_build_command(&args.build)?;
 
-    let emulator = Emulator::new(&args.emulator)?;
+    let emulator = Arc::new(RwLock::new(Emulator::new(&args.emulator)?));
+
+    // Kill emulator on ^C
+    let emulator_clone = emulator.clone();
+    ctrlc::set_handler(move || {
+        emulator_clone.write().unwrap().try_kill();
+        std::process::exit(0);
+    })?;
 
     // Wait for port to open
     println!("Waiting for GDB server...");
@@ -51,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Connect to GDB server
     let mut gdb = gdb::Client::new("[::1]:9123")?;
-    gdb.handle_recieve()?;
+    //gdb.handle_recieve()?;
 
     // Parse ELF file
     let elf_file = std::fs::read(&args.elf)?;
