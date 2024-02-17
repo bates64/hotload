@@ -31,4 +31,13 @@ impl Client {
 
         Ok(())
     }
+
+    pub fn write_memory(&mut self, address: u64, data: &[u8]) -> Result<()> {
+        let mut packet = Vec::new();
+        packet.extend_from_slice(b"M");
+        packet.extend_from_slice(&address.to_be_bytes());
+        packet.extend_from_slice(&data.len().to_be_bytes());
+        packet.extend_from_slice(data);
+        self.write_packet(&packet)
+    }
 }

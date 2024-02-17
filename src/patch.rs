@@ -6,6 +6,9 @@ use thiserror::Error;
 pub enum Error {
     #[error("not supported, restart the emulator")]
     NotSupported,
+
+    #[error("GDB IO error: {0}")]
+    Io(#[from] std::io::Error),
 }
 
 /// Apply a diff to a process.
@@ -25,19 +28,12 @@ pub fn apply(gdb: &mut Client, diff: &[Diff<'_, '_>]) -> Result<(), Error> {
                     return Err(Error::NotSupported);
                 }
 
-                /*
-                // TODO
-                // print hex of old item
-                for (i, byte) in old_item.content.iter().enumerate() {
-                    if i % 16 == 0 {
-                        print!("\n{:08x}  ", old_item.rom_addr + i as u64);
-                    }
-                    print!("{:02x} ", byte);
+                if old_item.section_name != new_item.section_name {
+                    // TODO section changes?
+                    return Err(Error::NotSupported);
                 }
-                println!();
-                */
 
-                println!("{}", new_item.disassemble().unwrap());
+                gdb.write_memory(old_item.ram_addr, new_item.content)?;
             }
         }
     }

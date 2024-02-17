@@ -2,21 +2,20 @@
 
 #include <libdragon.h>
 
-void new(void) {
-    // dont optimise away
-    printf("new\n");
+int i = 0;
+
+void update(void) {
+    printf("i = %d\n", i);
+    i += 1; // try changing this
 }
 
-int main(void)
-{
+int main(void) {
     console_init();
 
     debug_init_usblog();
     console_set_debug(true);
 
-    new();
-
-    printf("Hello world!\n");
-
-    while(0xDEADBEEF) {}
+    while (1) {
+        update();
+    }
 }
