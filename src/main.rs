@@ -5,6 +5,7 @@ mod patch;
 mod program;
 
 use clap::Parser;
+use emulator::Emulator;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
 use paris::error; // TODO: stop using paris, use a ratatui widget
 use std::sync::mpsc::channel;
@@ -33,13 +34,11 @@ struct Args {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    setup_panic_handler();
-
     let args = Args::parse();
 
     run_build_command(&args.build)?;
 
-    emulator::spawn(&args.emulator);
+    let emulator = Emulator::new(&args.emulator)?;
 
     // Wait for port to open
     println!("Waiting for GDB server...");
@@ -104,7 +103,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         //program = new_program;
     }
 
-    emulator::try_kill();
     Ok(())
 }
 
@@ -117,13 +115,4 @@ fn run_build_command(command: &str) -> Result<(), Box<dyn std::error::Error>> {
         return Err("Build failed".into());
     }
     Ok(())
-}
-
-/// Set up a panic handler that kills the emulator before exiting.
-fn setup_panic_handler() {
-    let original_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        emulator::try_kill();
-        original_hook(panic_info);
-    }));
 }
