@@ -14,4 +14,8 @@ build
 
 node_modules
 
-/target
+**/target
+**/*.rs.bk
+**/result*
+
+.direnv/
