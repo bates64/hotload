@@ -1,5 +1,6 @@
 [package]
 name = "hotload"
+description = "Hot code reloading"
 version = "0.1.0"
 edition = "2021"
 authors = ["Alex Bates <alex@bates64.com>"]
