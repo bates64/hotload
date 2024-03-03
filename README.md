@@ -38,8 +38,9 @@ All of the alternatives listed above require changes to the program source code,
 ## Requirements
 
 - An ELF executable with mips32 or mips64 architecture, unstripped (with symbols).
-- An emulator which implements the [GDB Remote Serial Protocol](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html).
-    - [ares](https://ares-emu.net) is one such emulator.
+- An emulator or game which implements the [GDB Remote Serial Protocol](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html).
+    - The [ares](https://ares-emu.net) emulator supports GDB for Nintendo 64.
+    - Games can implement GDB over flashcart serial ports. [Video tutorial](https://www.youtube.com/watch?v=Fr8rSqsFuWk).
 
 ## Usage
 
