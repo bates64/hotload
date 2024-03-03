@@ -14,7 +14,8 @@ This is useful in cases such as:
 
 - You are developing a cutscene in a game, and you want to see the changes immediately without having to restart the game, navigate to the cutscene, and trigger it.
 - You are developing a server application, and you want to avoid downtime when deploying new code.
-- You are developing a web application, and you want to see the changes immediately without having to restart the server or lose any state. (See also: [hot module replacement](https://vitejs.dev/guide/api-hmr.html))
+
+`hotload` is not suitable for architectures that do not support code modification at runtime through a debugger. This includes frontend web applications. For this purpose, try [hot module replacement](https://vitejs.dev/guide/api-hmr.html).
 
 ## What it does
 
@@ -29,12 +30,14 @@ This is useful in cases such as:
 The focus for `hotload` is the Nintendo 64 target, but its ideas are portable to other targets. If you are developing for another target and would like to see support for it, please [open an issue](https://github.com/bates64/hotload/issues/new). You may want to consider the following alternatives:
 - Dynamic linking, and reloading the library when it changes
   * This is not possible on embedded systems such as the Nintendo 64.
-- Embed a scripting language such as Lua and reload scripts
-- [Rewrite in an Erlang VM language such as Elixir](https://www.elixirwiki.com/wiki/Erlang_Hot_Code_Reloading)
+- Embed a scripting language such as Lua and develop a system to reload scripts when they change
+- [Use an Erlang VM language such as Elixir](https://www.elixirwiki.com/wiki/Erlang_Hot_Code_Reloading)
+
+All of the alternatives listed above require changes to the program source code, some more than others. `hotload` requires **no changes to source code**. In fact, it does not require source code at all, although the use cases for this situation are less clear.
 
 ## Requirements
 
-- Source code that compiles to an ELF file with mips32 or mips64 architecture.
+- An ELF executable with mips32 or mips64 architecture, unstripped (with symbols).
 - An emulator which implements the [GDB Remote Serial Protocol](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Remote-Protocol.html).
     - [ares](https://ares-emu.net) is one such emulator.
 
