@@ -24,7 +24,7 @@ This is useful in cases such as:
 1. Builds a program (using a user-provided build command such as `make`)
 2. Starts the program
 3. Watches the program's source code for changes, and when it detects a change:
-    1. Rebuilds your program
+    1. Rebuilds the program
     2. Loads the new code into the already-running program
 
 The focus for `hotload` is the Nintendo 64 target, but its ideas are portable to other targets. If you are developing for another target and would like to see support for it, please [open an issue](https://github.com/bates64/hotload/issues/new). You may want to consider the following alternatives:
