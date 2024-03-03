@@ -22,7 +22,7 @@ This is useful in cases such as:
 `hotload` is a command-line tool that:
 
 1. Builds a program (using a user-provided build command such as `make`)
-2. Start the program
+2. Starts the program
 3. Watches the program's source code for changes, and when it detects a change:
     1. Rebuilds your program
     2. Loads the new code into the already-running program
