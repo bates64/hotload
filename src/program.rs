@@ -43,6 +43,12 @@ impl<'a> Program<'a> {
             let sym_offset = sym.st_value - section.sh_addr;
             let rom_addr = section.sh_offset + sym_offset;
 
+            // Symbols with no size are not interesting, as there is no
+            // content to hotload. These are usually debug symbols.
+            if sym.st_size <= 0 {
+                continue;
+            }
+
             // TODO: consider tracking st_type (sym::STT_* consts)
 
             let item = Item {
