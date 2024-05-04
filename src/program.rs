@@ -11,7 +11,8 @@ pub struct Program<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Item<'a> {
-    pub section_name: Option<&'a str>,
+    pub name: &'a str,
+    pub section_name: Option<&'a str>, // TODO: rename to overlay_name?
     pub ram_addr: u64,
     pub rom_addr: u64,
     pub content: &'a [u8],
@@ -45,20 +46,20 @@ impl<'a> Program<'a> {
 
             // Symbols with no size are not interesting, as there is no
             // content to hotload. These are usually debug symbols.
-            if sym.st_size <= 0 {
+            if sym.st_size == 0 {
                 continue;
             }
 
             // TODO: consider tracking st_type (sym::STT_* consts)
 
-            let item = Item {
-                section_name,
-                ram_addr: sym.st_value,
-                rom_addr,
-                content: &bytes[rom_addr as usize..(rom_addr + sym.st_size) as usize],
-            };
-
             if let Some(name) = name {
+                let item = Item {
+                    name,
+                    section_name,
+                    ram_addr: sym.st_value,
+                    rom_addr,
+                    content: &bytes[rom_addr as usize..(rom_addr + sym.st_size) as usize],
+                };
                 items.insert(name, item);
             } else {
                 warn!("Symbol at index {} has no name, ignoring it", sym.st_name);
@@ -85,6 +86,15 @@ impl<'a> Item<'a> {
     }
 
     pub fn disassemble(&self) -> Result<String, capstone::Error> {
+        // If this looks like a string, just return it
+        // TODO: could look at section being .rodata or .data
+        if let Ok(string) = std::str::from_utf8(self.content) {
+            return Ok(string.to_string());
+        }
+
+        // Treat as code
+        // TODO: could look at section being .text
+
         // TODO: lazy static or put in Program
         let cs = Capstone::new()
             .mips()
@@ -93,7 +103,7 @@ impl<'a> Item<'a> {
             .detail(true) // TODO: find out what this does
             .build()?;
 
-        let insns = cs.disasm_all(self.content, self.ram_addr)?;
+        let insns = cs.disasm_all(self.content, self.ram_addr)?; // TODO: handle error and return hex string instead
 
         let mut output = String::new();
         for i in insns.iter() {
@@ -113,11 +123,9 @@ impl Display for Item<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Item {{ section: {:?}, ram_addr: 0x{:08x}, rom_addr: 0x{:08x}, size: {} }}",
-            self.section_name.unwrap_or("None"),
-            self.ram_addr,
-            self.rom_addr,
-            self.size()
+            "{}{}",
+            self.name,
+            self.disassemble().unwrap_or_else(|_| "".to_string()),
         )
     }
 }
