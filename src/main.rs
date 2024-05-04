@@ -102,6 +102,11 @@ fn hotload(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
 
         diff = diff::diff(&program, &new_program);
 
+        if diff.is_empty() {
+            println!("No changes (diff is empty)");
+            continue;
+        }
+
         for diff in &diff {
             println!("{}", diff);
         }
