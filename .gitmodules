@@ -2,3 +2,9 @@
 	path = examples/hello-world-libdragon/libdragon
 	url = https://github.com/DragonMinded/libdragon
 	branch = trunk
+[submodule "examples/sm64"]
+	path = examples/sm64
+	url = git@github.com:n64decomp/sm64.git
+[submodule "examples/papermario-dx"]
+	path = examples/papermario-dx
+	url = git@github.com:star-haven/papermario-dx.git
