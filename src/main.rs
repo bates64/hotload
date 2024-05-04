@@ -8,16 +8,20 @@ mod program;
 use emulator::Emulator;
 use interface::Args;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
-use paris::error;
+use paris::{error, warn};
 use std::sync::{mpsc::channel, Arc, RwLock};
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let workspace = Args::new();
+    let args = Args::new();
 
-    run_build_command(&workspace.build)?;
+    if args.checkpoints.is_empty() {
+        warn!("Checkpoints not yet implemented. Ignoring.");
+    }
 
-    let emulator = Arc::new(RwLock::new(Emulator::new(&workspace.emulator)?));
+    run_build_command(&args.build)?;
+
+    let emulator = Arc::new(RwLock::new(Emulator::new(&args.emulator)?));
 
     // Kill emulator on ^C
     let emulator_clone = emulator.clone();
@@ -26,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(0);
     })?;
 
-    match hotload(&workspace) {
+    match hotload(&args) {
         Ok(()) => {}
         Err(error) => {
             error!("{}", error);

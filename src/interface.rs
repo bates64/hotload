@@ -2,6 +2,7 @@ use clap::Parser;
 use paris::error;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 /// Hot code loading (dynamic software updating) for Nintendo 64 development
 #[derive(Parser, Debug, Serialize, Deserialize)]
@@ -23,6 +24,27 @@ pub struct Args {
     /// Emulator command (e.g. `ares rom.z64`)
     #[clap(short = 'x', long)]
     pub emulator: String,
+
+    #[clap(short, long)]
+    pub checkpoints: Vec<Checkpoint>,
+}
+
+/// An update-safe point in the code where dynamic software updating can occur
+#[derive(Parser, Debug, Clone, Serialize, Deserialize)]
+pub struct Checkpoint {
+    /// Symbol name of the function
+    pub function: String,
+}
+
+// For clap to parse Vec<Checkpoint> as comma-separated values
+impl FromStr for Checkpoint {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Checkpoint {
+            function: s.to_string(),
+        })
+    }
 }
 
 impl Args {
