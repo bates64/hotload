@@ -1,44 +1,23 @@
 mod diff;
 mod emulator;
 mod gdb;
+mod interface;
 mod patch;
 mod program;
 
-use clap::Parser;
 use emulator::Emulator;
+use interface::Args;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
 use paris::error;
 use std::sync::{mpsc::channel, Arc, RwLock};
-use std::{path::PathBuf, time::Duration};
-
-/// Hot code loading (dynamic software updating) for Nintendo 64 development
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Build system command to run (e.g. `make`, `ninja`, `libdragon build`)
-    #[clap(short, long)]
-    build: String,
-
-    /// ELF file that is output from build command
-    #[clap(short, long)]
-    elf: PathBuf,
-
-    /// Source files and/or directories to recursively watch for changes
-    #[clap(short, long)]
-    src: Vec<PathBuf>,
-
-    // TODO: support attaching to existing emulator
-    /// Emulator command (e.g. `ares rom.z64`)
-    #[clap(short = 'x', long)]
-    emulator: String,
-}
+use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
+    let workspace = Args::new();
 
-    run_build_command(&args.build)?;
+    run_build_command(&workspace.build)?;
 
-    let emulator = Arc::new(RwLock::new(Emulator::new(&args.emulator)?));
+    let emulator = Arc::new(RwLock::new(Emulator::new(&workspace.emulator)?));
 
     // Kill emulator on ^C
     let emulator_clone = emulator.clone();
@@ -47,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(0);
     })?;
 
-    match hotload(&args) {
+    match hotload(&workspace) {
         Ok(()) => {}
         Err(error) => {
             error!("{}", error);

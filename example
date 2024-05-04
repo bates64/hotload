@@ -1,0 +1,4 @@
+cd examples/papermario-dx
+nix run ../../ -- --build ninja --elf ver/us/build/papermario.elf --emulator "ares ver/us/build/papermario.z64" --src src
+
+modify state_title_screen.c:444 "-100" to "-200" and watch title move

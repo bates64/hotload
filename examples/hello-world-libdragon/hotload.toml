@@ -1,0 +1,4 @@
+build="npm run build"
+elf="build/hello.elf"
+src=["src"]
+emulator="ares hello.z64"

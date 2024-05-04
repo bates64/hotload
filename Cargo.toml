@@ -14,3 +14,5 @@ goblin = "0.8"
 notify-debouncer-mini = "0.4.1"
 paris = { version = "1.5.15", features = [ "macros" ] }
 thiserror = "1.0.56"
+serde = { version = "1", features = [ "derive" ] }
+toml = "0.8"
