@@ -25,6 +25,7 @@ pub struct Args {
     #[clap(short = 'x', long)]
     pub emulator: String,
 
+    /// Safe functions, high up in the call stack, where updating can occur e.g. the game step / frame function
     #[clap(short, long)]
     pub checkpoints: Vec<Checkpoint>,
 }
