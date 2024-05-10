@@ -4,10 +4,12 @@ This is an example of how to use hotload with libdragon, an open-source toolchai
 
 ## Setup
 
-Download the toolchain with `npm install` and make sure you have hotload installed.
+Download the toolchain with `npm install` and make sure you have hotload installed (e.g. `cargo install --path ..`).
 
-## Watch
+## Usage
+
+In this directory, run:
 
 ```
-hotload --build "npm build" --elf build/hello.elf --src src --emulator "ares hello.z64"
+hotload
 ```
