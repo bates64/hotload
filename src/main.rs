@@ -1,16 +1,16 @@
 mod diff;
-mod emulator;
 mod gdb;
 mod interface;
 mod patch;
 mod program;
+mod target;
 
-use emulator::Emulator;
 use interface::Args;
 use notify_debouncer_mini::{new_debouncer, notify::RecursiveMode};
 use paris::{error, warn};
 use std::sync::{mpsc::channel, Arc, RwLock};
 use std::time::Duration;
+use target::Target;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::new();
@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     run_build_command(&args.build)?;
 
-    let emulator = Arc::new(RwLock::new(Emulator::new(&args.emulator)?));
+    let emulator = Arc::new(RwLock::new(Target::new(&args.emulator)?));
 
     // Kill emulator on ^C
     let emulator_clone = emulator.clone();

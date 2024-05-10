@@ -1,14 +1,14 @@
 use std::process::Child;
 
-/// An emulator process.
+/// The target system, e.g. an emulator process.
 #[derive(Debug)]
-pub struct Emulator {
+pub struct Target {
     child: Child,
 }
 
-impl Emulator {
+impl Target {
     pub fn new(command: &str) -> std::io::Result<Self> {
-        Ok(Emulator {
+        Ok(Target {
             child: std::process::Command::new("sh")
                 .arg("-c")
                 .arg(command)
